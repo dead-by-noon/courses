@@ -46,7 +46,8 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     git checkout ${KERNEL_VERSION}
 
     # The patch to prevent the multiple symbol declaration of yylloc is applied in this step. It is first downloaded from the internet and then applied to the checked out version of the linux filesystem
-    curl -s -o e33a814e772cdc36436c8c188d8c42d019fda639.patch https://github.com/torvalds/linux/commit/e33a814e772cdc36436c8c188d8c42d019fda639.patch
+    echo "Using wget to access the patch to prevent yylloc from causing an error in the build"
+    wget -O e33a814e772cdc36436c8c188d8c42d019fda639.patch https://github.com/torvalds/linux/commit/e33a814e772cdc36436c8c188d8c42d019fda639.patch
     git apply e33a814e772cdc36436c8c188d8c42d019fda639.patch
 
     # TODO: Add your kernel build steps here
@@ -55,7 +56,7 @@ if [ ! -e ${OUTDIR}/linux-stable/arch/${ARCH}/boot/Image ]; then
     # With so many things to configure, it is unreasonable to start with a clean sheet each time you want to build a kernel, so there is a set of known working configuration files in arch/$ARCH/configs, each containing suitable configuration values for a single SoC or a group of SoCs.
     make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} defconfig
     # Build all of the artifacts required to run the kernel on an arm platform device
-    make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
+    make -j4 ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} all
 fi
 
 
@@ -121,7 +122,7 @@ cp -a $SYSROOT/lib64/libc-2.33.so $OUTDIR/rootfs/lib64/
 # TODO: Make device nodes
 # In a really minimal root filesystem, you need just two nodes to boot with BusyBox: console and null. The console only needs to be accessible to root, the owner of the device node, so the access permissions are 600 (rw-------). The null device should be readable and writable by everyone, so the mode is 666 (rw-rw-rw-). You can use the -m option for mknod to set the mode when creating the node. You need to be root to create device nodes,
 cd $OUTDIR/rootfs
-sudo mknod -m 666 dev/null c 1
+sudo mknod -m 666 dev/null c 1 3
 sudo mknod -m 600 dev/console c 5 1
 
 # TODO: Clean and build the writer utility
